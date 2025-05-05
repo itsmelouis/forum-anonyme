@@ -4,23 +4,34 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint . --ext .js,.vue"
+    "lint": "eslint . --ext .js,.vue",
+    "prepare": "husky install"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.10.0",
   "devDependencies": {
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.26.0",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.4.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.5.1",
     "prettier": "^3.5.3"
   },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "lint-staged": {
+    "*.{js,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }
