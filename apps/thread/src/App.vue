@@ -16,7 +16,7 @@ import { ref, onMounted } from 'vue'
 
 const threads = ref([])
 onMounted(async () => {
-  const res = await fetch('http://api:3000/threads')
+  const res = await fetch('http://localhost:3000/threads')
   threads.value = await res.json()
 })
 </script>

@@ -4,9 +4,15 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
+# Copier le package.json de l'application
+COPY package.json ./
+
+# Copier le reste des fichiers de l'application
 COPY . .
 
-RUN pnpm install --frozen-lockfile && pnpm build
+# Installation des dépendances et build
+# Utiliser --no-frozen-lockfile car le fichier pnpm-lock.yaml n'est pas disponible
+RUN pnpm install && pnpm build
 
 EXPOSE 3000
 

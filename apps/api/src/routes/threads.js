@@ -1,23 +1,20 @@
 import { Router } from 'express'
+import { getAllThreads, createThread } from '../db.js'
 
 const router = Router()
-const THREAD_SERVICE_URL =
-  process.env.THREAD_SERVICE_URL || 'http://thread:4000/threads'
 
-// GET /threads
 router.get('/', async (req, res) => {
   try {
-    const response = await fetch(THREAD_SERVICE_URL)
-    const data = await response.json()
-    res.json(data)
+    const threads = await getAllThreads()
+    res.json(threads)
   } catch (err) {
+    console.error(err)
     res
       .status(500)
-      .json({ error: 'Erreur de communication avec le service thread' })
+      .json({ error: 'Erreur lors de la récupération des messages' })
   }
 })
 
-// POST /threads
 router.post('/', async (req, res) => {
   const { title, content } = req.body
   if (!title || !content) {
@@ -25,17 +22,13 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const response = await fetch(THREAD_SERVICE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content }),
-    })
-    const data = await response.json()
-    res.status(response.status).json(data)
+    const thread = await createThread({ title, content })
+    res.status(201).json(thread)
   } catch (err) {
-    res.status(500).json({
-      error: 'Impossible d’enregistrer le thread via le service thread.',
-    })
+    console.error(err)
+    res
+      .status(500)
+      .json({ error: 'Erreur lors de l’enregistrement du message' })
   }
 })
 
