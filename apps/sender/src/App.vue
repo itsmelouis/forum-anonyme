@@ -5,25 +5,25 @@
         <h1>Forum Anonyme</h1>
         <p class="subtitle">Partagez vos pensées en toute liberté</p>
       </div>
-      
+
       <form @submit.prevent="sendMessage" class="message-form">
         <div class="form-group">
           <label for="title">Titre</label>
-          <input 
-            id="title" 
-            v-model="title" 
-            placeholder="Donnez un titre à votre message" 
-            required 
+          <input
+            id="title"
+            v-model="title"
+            placeholder="Donnez un titre à votre message"
+            required
           />
         </div>
 
         <div class="form-group">
           <label for="content">Message</label>
-          <textarea 
-            id="content" 
-            v-model="content" 
-            placeholder="Exprimez-vous librement..." 
-            rows="6" 
+          <textarea
+            id="content"
+            v-model="content"
+            placeholder="Exprimez-vous librement..."
+            rows="6"
             required
           ></textarea>
         </div>
@@ -33,7 +33,7 @@
           <span v-else>Envoi en cours...</span>
         </button>
       </form>
-      
+
       <div class="notification-area">
         <div v-if="message" class="notification success">
           <span class="icon">✓</span> {{ message }}
@@ -42,7 +42,7 @@
           <span class="icon">✗</span> {{ error }}
         </div>
       </div>
-      
+
       <div class="footer">
         <p>Tous les messages sont anonymes et publics</p>
       </div>
@@ -58,15 +58,15 @@ export default {
       content: '',
       message: '',
       error: '',
-      sending: false
+      sending: false,
     }
   },
   methods: {
     async sendMessage() {
-      this.sending = true;
-      this.message = '';
-      this.error = '';
-      
+      this.sending = true
+      this.message = ''
+      this.error = ''
+
       try {
         const res = await fetch('http://localhost:3000/threads', {
           method: 'POST',
@@ -78,8 +78,8 @@ export default {
         })
 
         if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || 'Erreur lors de l\'envoi');
+          const errorData = await res.json()
+          throw new Error(errorData.error || "Erreur lors de l'envoi")
         }
 
         this.message = 'Message envoyé avec succès !'
@@ -88,7 +88,7 @@ export default {
       } catch (e) {
         this.error = e.message
       } finally {
-        this.sending = false;
+        this.sending = false
       }
     },
   },
@@ -147,17 +147,21 @@ label {
   font-size: 0.95rem;
 }
 
-input, textarea {
+input,
+textarea {
   width: 100%;
   padding: 0.8rem 1rem;
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
   background-color: #f9f9f9;
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
   outline: none;
   border-color: #646cff;
   box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.2);
@@ -173,7 +177,9 @@ input:focus, textarea:focus {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
+  transition:
+    background-color 0.3s,
+    transform 0.2s;
 }
 
 .submit-btn:hover {
@@ -230,19 +236,19 @@ input:focus, textarea:focus {
   .sender-container {
     padding: 1rem;
   }
-  
+
   .card-container {
     border-radius: 8px;
   }
-  
+
   .header {
     padding: 1.5rem 1.5rem 0.5rem;
   }
-  
+
   .header h1 {
     font-size: 1.8rem;
   }
-  
+
   .message-form,
   .notification-area {
     padding: 1rem 1.5rem;
