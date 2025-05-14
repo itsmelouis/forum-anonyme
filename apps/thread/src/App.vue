@@ -5,7 +5,7 @@
         <h1>Forum Anonyme</h1>
         <p class="subtitle">Discussions anonymes en temps réel</p>
       </div>
-      
+
       <div class="controls">
         <button @click="loadThreads" class="reload-btn" :disabled="loading">
           <span v-if="!loading" class="reload-icon">&#8635;</span>
@@ -16,29 +16,34 @@
           Dernière mise à jour: {{ lastUpdated }}
         </p>
       </div>
-      
+
       <div class="messages-container" v-if="threads.length > 0">
         <div v-for="thread in threads" :key="thread.id" class="message-card">
           <div class="message-header">
             <h3 class="message-title">{{ thread.title }}</h3>
-            <span class="message-date">{{ formatDate(thread.created_at) }}</span>
+            <span class="message-date">{{
+              formatDate(thread.created_at)
+            }}</span>
           </div>
           <p class="message-content">{{ thread.content }}</p>
         </div>
       </div>
-      
+
       <div v-else-if="!loading" class="empty-state">
         <p>Aucun message pour le moment</p>
         <p class="empty-hint">Soyez le premier à poster un message!</p>
       </div>
-      
+
       <div v-if="loading && threads.length === 0" class="loading-state">
         <div class="loading-spinner"></div>
         <p>Chargement des messages...</p>
       </div>
-      
+
       <div class="footer">
-        <p>Vous pouvez envoyer un message anonyme sur <a href="http://localhost:8080" target="_blank">la page d'envoi</a></p>
+        <p>
+          Vous pouvez envoyer un message anonyme sur
+          <a href="http://localhost:8080" target="_blank">la page d'envoi</a>
+        </p>
       </div>
     </div>
   </div>
@@ -53,35 +58,35 @@ const lastUpdated = ref('')
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
-  
+
   const date = new Date(dateString)
-  return new Intl.DateTimeFormat('fr-FR', { 
+  return new Intl.DateTimeFormat('fr-FR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   }).format(date)
 }
 
 const updateLastUpdated = () => {
   const now = new Date()
-  lastUpdated.value = new Intl.DateTimeFormat('fr-FR', { 
+  lastUpdated.value = new Intl.DateTimeFormat('fr-FR', {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit'
+    second: '2-digit',
   }).format(now)
 }
 
 const loadThreads = async () => {
   loading.value = true
-  
+
   try {
     const res = await fetch('http://localhost:3000/threads')
     if (!res.ok) {
       throw new Error('Erreur lors du chargement des messages')
     }
-    
+
     threads.value = await res.json()
     updateLastUpdated()
   } catch (error) {
@@ -153,7 +158,9 @@ onMounted(() => {
   padding: 0.6rem 1.2rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
+  transition:
+    background-color 0.3s,
+    transform 0.2s;
 }
 
 .reload-btn:hover {
@@ -178,8 +185,12 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .last-updated {
@@ -200,7 +211,9 @@ onMounted(() => {
   padding: 1.2rem;
   margin-bottom: 1rem;
   border-left: 4px solid #646cff;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .message-card:hover {
@@ -234,7 +247,8 @@ onMounted(() => {
   white-space: pre-line;
 }
 
-.empty-state, .loading-state {
+.empty-state,
+.loading-state {
   padding: 3rem 2rem;
   text-align: center;
   color: #666;
@@ -269,30 +283,30 @@ onMounted(() => {
   .thread-container {
     padding: 1rem;
   }
-  
+
   .card-container {
     border-radius: 8px;
   }
-  
+
   .header {
     padding: 1.5rem 1.5rem 1rem;
   }
-  
+
   .header h1 {
     font-size: 1.8rem;
   }
-  
+
   .controls {
     flex-direction: column;
     gap: 0.8rem;
     align-items: flex-start;
   }
-  
+
   .reload-btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .messages-container {
     padding: 1rem 1.5rem;
   }
