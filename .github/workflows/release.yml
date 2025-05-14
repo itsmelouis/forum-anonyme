@@ -23,7 +23,7 @@ jobs:
       - name: Release Please
         uses: googleapis/release-please-action@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GHCR_TOKEN }}
           release-type: node
           package-name: forum-anonyme
           changelog-types: |
