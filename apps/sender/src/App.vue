@@ -61,6 +61,11 @@ export default {
       sending: false,
     }
   },
+  computed: {
+    apiUrl() {
+      return '__API_URL__'
+    },
+  },
   methods: {
     async sendMessage() {
       this.sending = true
@@ -68,7 +73,7 @@ export default {
       this.error = ''
 
       try {
-        const res = await fetch('http://localhost:3000/threads', {
+        const res = await fetch(`${this.apiUrl}/threads`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

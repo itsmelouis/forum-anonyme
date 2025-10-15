@@ -237,8 +237,9 @@ resource "aws_instance" "thread" {
               yum install -y docker
               systemctl start docker
               systemctl enable docker
-              docker run -d -p 80:3000 --name thread \
-                -e API_URL=http://${aws_instance.api.public_ip}:3000/threads \
+              docker run -d -p 80:80 --name thread \
+                -e API_URL=http://${aws_instance.api.public_ip}:3000 \
+                -e SENDER_URL=http://${aws_instance.sender.public_ip}:8080 \
                 ghcr.io/${var.github_repository}/thread:${var.docker_image_tag}
               EOF
 
@@ -264,8 +265,8 @@ resource "aws_instance" "sender" {
               yum install -y docker
               systemctl start docker
               systemctl enable docker
-              docker run -d -p 8080:3000 --name sender \
-                -e API_URL=http://${aws_instance.api.public_ip}:3000/threads \
+              docker run -d -p 8080:80 --name sender \
+                -e API_URL=http://${aws_instance.api.public_ip}:3000 \
                 ghcr.io/${var.github_repository}/sender:${var.docker_image_tag}
               EOF
 

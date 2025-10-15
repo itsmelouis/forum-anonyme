@@ -42,7 +42,7 @@
       <div class="footer">
         <p>
           Vous pouvez envoyer un message anonyme sur
-          <a href="http://localhost:8080" target="_blank">la page d'envoi</a>
+          <a :href="senderUrl" target="_blank">la page d'envoi</a>
         </p>
       </div>
     </div>
@@ -55,6 +55,7 @@ import { ref, onMounted } from 'vue'
 const threads = ref([])
 const loading = ref(false)
 const lastUpdated = ref('')
+const senderUrl = '__SENDER_URL__'
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
@@ -82,7 +83,8 @@ const loadThreads = async () => {
   loading.value = true
 
   try {
-    const res = await fetch('http://localhost:3000/threads')
+    const apiUrl = '__API_URL__'
+    const res = await fetch(`${apiUrl}/threads`)
     if (!res.ok) {
       throw new Error('Erreur lors du chargement des messages')
     }

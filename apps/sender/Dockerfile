@@ -1,19 +1,28 @@
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-# Copier le package.json de l'application
 COPY package.json ./
-
-# Copier le reste des fichiers de l'application
 COPY . .
 
-# Installation des dépendances et build
-# Utiliser --no-frozen-lockfile car le fichier pnpm-lock.yaml n'est pas disponible
 RUN pnpm install && pnpm build
 
-EXPOSE 3000
+# Production stage
+FROM nginx:alpine
 
-CMD ["pnpm", "preview", "--host", "--port", "3000"]
+# Copier les fichiers buildés
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copier la configuration Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copier le script d'entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]
