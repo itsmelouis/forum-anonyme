@@ -187,4 +187,4 @@ jobs:
           echo "- **API** (backend): ${{ steps.outputs.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Database**: ${{ steps.outputs.outputs.db_ip }}:5432" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Each service runs on its own EC2 t2.micro instance!" >> $GITHUB_STEP_SUMMARY
+          echo "Both frontend apps (Thread & Sender) run on port 80!" >> $GITHUB_STEP_SUMMARY

@@ -43,7 +43,7 @@ output "sender_public_ip" {
 
 output "sender_url" {
   description = "URL for Sender service"
-  value       = "http://${aws_instance.sender.public_ip}:8080"
+  value       = "http://${aws_instance.sender.public_ip}"
 }
 
 # Database Instance

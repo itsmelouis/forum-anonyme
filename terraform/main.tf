@@ -129,15 +129,15 @@ resource "aws_security_group" "thread" {
   }
 }
 
-# Security Group for Sender (port 8080)
+# Security Group for Sender (port 80)
 resource "aws_security_group" "sender" {
   name_prefix = "floquet-louis-${var.project_name}-sender-"
   description = "Security group for Sender service"
 
   ingress {
     description = "HTTP"
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -239,7 +239,7 @@ resource "aws_instance" "thread" {
               systemctl enable docker
               docker run -d -p 80:80 --name thread \
                 -e API_URL=http://${aws_instance.api.public_ip}:3000 \
-                -e SENDER_URL=http://${aws_instance.sender.public_ip}:8080 \
+                -e SENDER_URL=http://${aws_instance.sender.public_ip} \
                 ghcr.io/${var.github_repository}/thread:${var.docker_image_tag}
               EOF
 
@@ -265,7 +265,7 @@ resource "aws_instance" "sender" {
               yum install -y docker
               systemctl start docker
               systemctl enable docker
-              docker run -d -p 8080:80 --name sender \
+              docker run -d -p 80:80 --name sender \
                 -e API_URL=http://${aws_instance.api.public_ip}:3000 \
                 ghcr.io/${var.github_repository}/sender:${var.docker_image_tag}
               EOF
