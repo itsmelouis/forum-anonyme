@@ -191,6 +191,16 @@ jobs:
         id: sha
         run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      # Télécharger le state précédent s'il existe
+      - name: Download Terraform state
+        uses: dawidd6/action-download-artifact@v3
+        continue-on-error: true
+        with:
+          name: terraform-state
+          path: ./terraform
+          workflow: ci-cd.yml
+          branch: ${{ github.ref_name }}
+
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
@@ -205,6 +215,17 @@ jobs:
       - name: Terraform Apply
         working-directory: ./terraform
         run: terraform apply -auto-approve tfplan
+
+      # Sauvegarder le state pour les prochains runs
+      - name: Upload Terraform state
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terraform-state
+          path: |
+            ./terraform/terraform.tfstate
+            ./terraform/terraform.tfstate.backup
+          retention-days: 90
 
       - name: Get deployment outputs
         working-directory: ./terraform

@@ -30,6 +30,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
+      # Télécharger le state pour pouvoir détruire les ressources
+      - name: Download Terraform state
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          name: terraform-state
+          path: ./terraform
+          workflow: ci-cd.yml
+          branch: main
+
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
@@ -37,6 +46,14 @@ jobs:
       - name: Terraform Destroy
         working-directory: ./terraform
         run: terraform destroy -auto-approve
+
+      # Supprimer le state artifact après destruction
+      - name: Delete Terraform state artifact
+        if: success()
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: terraform-state
+          failOnError: false
 
       - name: Destruction Summary
         run: |
