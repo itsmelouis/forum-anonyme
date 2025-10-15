@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 # Variables d'environnement globales pour le registre Docker
 env:
@@ -119,6 +120,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           push: true
+          provenance: false
           tags: |
             ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.REPO_NAME }}/${{ matrix.service }}:latest
             ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.REPO_NAME }}/${{ matrix.service }}:${{ steps.sha.outputs.SHORT_SHA }}
