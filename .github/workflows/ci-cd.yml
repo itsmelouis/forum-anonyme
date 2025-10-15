@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main, master ]
 
+# Permissions globales pour le workflow
+permissions:
+  contents: read
+  packages: write
+
 # Variables d'environnement globales pour le registre Docker
 env:
   REGISTRY: ghcr.io
