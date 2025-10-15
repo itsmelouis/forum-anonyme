@@ -33,11 +33,6 @@ data "aws_ami" "amazon_linux_2" {
   }
 }
 
-# Default VPC
-data "aws_vpc" "default" {
-  default = true
-}
-
 # Generate SSH key pair
 resource "tls_private_key" "key" {
   algorithm = "RSA"
@@ -46,57 +41,37 @@ resource "tls_private_key" "key" {
 
 # Create AWS key pair
 resource "aws_key_pair" "deployer" {
-  key_name   = "${var.project_name}-key-${var.environment}"
+  key_name   = "floquet-louis-${var.project_name}-key-${var.environment}"
   public_key = tls_private_key.key.public_key_openssh
 
   tags = {
-    Name        = "${var.project_name}-key"
+    Name        = "floquet-louis-${var.project_name}-key"
     Environment = var.environment
     Project     = var.project_name
+    Owner       = "floquet-louis"
   }
 }
 
 # Store private key locally (for SSH access)
 resource "local_file" "private_key" {
   content         = tls_private_key.key.private_key_pem
-  filename        = "${path.module}/keys/${var.project_name}-key.pem"
+  filename        = "${path.module}/keys/floquet-louis-${var.project_name}-key.pem"
   file_permission = "0600"
 }
 
-# Security Group for EC2 instance
-resource "aws_security_group" "forum" {
-  name_prefix = "${var.project_name}-"
-  description = "Security group for Forum Anonyme application"
-  vpc_id      = data.aws_vpc.default.id
+# Security Group for API (port 3000)
+resource "aws_security_group" "api" {
+  name_prefix = "floquet-louis-${var.project_name}-api-"
+  description = "Security group for API service"
 
-  # HTTP access for Thread service (port 80)
   ingress {
-    description = "HTTP Thread Service"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # HTTP access for API service (port 3000)
-  ingress {
-    description = "HTTP API Service"
+    description = "HTTP API"
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # HTTP access for Sender service (port 8080)
-  ingress {
-    description = "HTTP Sender Service"
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # SSH access
   ingress {
     description = "SSH"
     from_port   = 22
@@ -105,9 +80,7 @@ resource "aws_security_group" "forum" {
     cidr_blocks = var.allowed_ssh_cidr
   }
 
-  # All outbound traffic
   egress {
-    description = "All outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -115,78 +88,219 @@ resource "aws_security_group" "forum" {
   }
 
   tags = {
-    Name        = "${var.project_name}-sg"
-    Environment = var.environment
-    Project     = var.project_name
-  }
-
-  lifecycle {
-    create_before_destroy = true
+    Name    = "floquet-louis-${var.project_name}-api-sg"
+    Service = "api"
+    Owner   = "floquet-louis"
   }
 }
 
-# Elastic IP for stable public IP
-resource "aws_eip" "forum" {
-  instance = aws_instance.forum.id
-  domain   = "vpc"
+# Security Group for Thread (port 80)
+resource "aws_security_group" "thread" {
+  name_prefix = "floquet-louis-${var.project_name}-thread-"
+  description = "Security group for Thread service"
 
-  tags = {
-    Name        = "${var.project_name}-eip"
-    Environment = var.environment
-    Project     = var.project_name
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  depends_on = [aws_instance.forum]
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = var.allowed_ssh_cidr
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name    = "floquet-louis-${var.project_name}-thread-sg"
+    Service = "thread"
+    Owner   = "floquet-louis"
+  }
 }
 
-# EC2 Instance
-resource "aws_instance" "forum" {
-  ami           = data.aws_ami.amazon_linux_2.id
-  instance_type = var.instance_type
-  key_name      = aws_key_pair.deployer.key_name
+# Security Group for Sender (port 8080)
+resource "aws_security_group" "sender" {
+  name_prefix = "floquet-louis-${var.project_name}-sender-"
+  description = "Security group for Sender service"
 
-  vpc_security_group_ids = [aws_security_group.forum.id]
-
-  # Root volume configuration
-  root_block_device {
-    volume_type           = "gp3"
-    volume_size           = 20
-    delete_on_termination = true
-    encrypted             = true
-
-    tags = {
-      Name        = "${var.project_name}-root-volume"
-      Environment = var.environment
-    }
+  ingress {
+    description = "HTTP"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # User data script to install Docker and deploy application
-  user_data = templatefile("${path.module}/scripts/user_data.sh", {
-    docker_image_tag    = var.docker_image_tag
-    github_repository   = var.github_repository
-    db_password         = var.db_password
-    project_name        = var.project_name
-  })
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = var.allowed_ssh_cidr
+  }
 
-  # Enable detailed monitoring
-  monitoring = true
-
-  # Metadata options for security
-  metadata_options {
-    http_endpoint               = "enabled"
-    http_tokens                 = "required"
-    http_put_response_hop_limit = 1
-    instance_metadata_tags      = "enabled"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
-    Name        = "${var.project_name}-instance"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
+    Name    = "floquet-louis-${var.project_name}-sender-sg"
+    Service = "sender"
+    Owner   = "floquet-louis"
+  }
+}
+
+# Security Group for DB (port 5432)
+resource "aws_security_group" "db" {
+  name_prefix = "floquet-louis-${var.project_name}-db-"
+  description = "Security group for Database service"
+
+  ingress {
+    description = "PostgreSQL"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  lifecycle {
-    ignore_changes = [ami]
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = var.allowed_ssh_cidr
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name    = "floquet-louis-${var.project_name}-db-sg"
+    Service = "db"
+    Owner   = "floquet-louis"
+  }
+}
+
+# EC2 Instance for API
+resource "aws_instance" "api" {
+  ami             = data.aws_ami.amazon_linux_2.id
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.deployer.key_name
+  security_groups = [aws_security_group.api.name]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y docker
+              systemctl start docker
+              systemctl enable docker
+              docker run -d -p 3000:3000 --name api \
+                -e DATABASE_URL=postgresql://forum:${var.db_password}@${aws_instance.db.public_ip}:5432/forumdb \
+                ghcr.io/${var.github_repository}/api:${var.docker_image_tag}
+              EOF
+
+  tags = {
+    Name    = "floquet-louis-${var.project_name}-api"
+    Service = "api"
+    Owner   = "floquet-louis"
+  }
+}
+
+# EC2 Instance for Thread
+resource "aws_instance" "thread" {
+  ami             = data.aws_ami.amazon_linux_2.id
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.deployer.key_name
+  security_groups = [aws_security_group.thread.name]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y docker
+              systemctl start docker
+              systemctl enable docker
+              docker run -d -p 80:3000 --name thread \
+                -e API_URL=http://${aws_instance.api.public_ip}:3000/threads \
+                ghcr.io/${var.github_repository}/thread:${var.docker_image_tag}
+              EOF
+
+  tags = {
+    Name    = "floquet-louis-${var.project_name}-thread"
+    Service = "thread"
+    Owner   = "floquet-louis"
+  }
+
+  depends_on = [aws_instance.api]
+}
+
+# EC2 Instance for Sender
+resource "aws_instance" "sender" {
+  ami             = data.aws_ami.amazon_linux_2.id
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.deployer.key_name
+  security_groups = [aws_security_group.sender.name]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y docker
+              systemctl start docker
+              systemctl enable docker
+              docker run -d -p 8080:3000 --name sender \
+                -e API_URL=http://${aws_instance.api.public_ip}:3000/threads \
+                ghcr.io/${var.github_repository}/sender:${var.docker_image_tag}
+              EOF
+
+  tags = {
+    Name    = "floquet-louis-${var.project_name}-sender"
+    Service = "sender"
+    Owner   = "floquet-louis"
+  }
+
+  depends_on = [aws_instance.api]
+}
+
+# EC2 Instance for Database
+resource "aws_instance" "db" {
+  ami             = data.aws_ami.amazon_linux_2.id
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.deployer.key_name
+  security_groups = [aws_security_group.db.name]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y docker
+              systemctl start docker
+              systemctl enable docker
+              docker run -d -p 5432:5432 --name postgres \
+                -e POSTGRES_USER=forum \
+                -e POSTGRES_PASSWORD=${var.db_password} \
+                -e POSTGRES_DB=forumdb \
+                postgres:16
+              EOF
+
+  tags = {
+    Name    = "floquet-louis-${var.project_name}-db"
+    Service = "db"
+    Owner   = "floquet-louis"
   }
 }

@@ -20,7 +20,7 @@ variable "instance_type" {
   description = "EC2 instance type (t2/t3 nano or micro only)"
   type        = string
   default     = "t2.micro"
-  
+
   validation {
     condition     = can(regex("^t[2-3]\\.(nano|micro)$", var.instance_type))
     error_message = "Instance type must be t2.nano, t2.micro, t3.nano, or t3.micro as per AWS educational account restrictions."
@@ -39,7 +39,7 @@ variable "db_password" {
   type        = string
   sensitive   = true
   default     = "SecureForumPassword2024!"
-  
+
   validation {
     condition     = length(var.db_password) >= 8
     error_message = "Database password must be at least 8 characters long."

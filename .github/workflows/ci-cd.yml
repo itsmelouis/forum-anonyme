@@ -172,13 +172,19 @@ jobs:
         working-directory: ./terraform
         id: outputs
         run: |
+          echo "api_url=$(terraform output -raw api_url)" >> $GITHUB_OUTPUT
           echo "thread_url=$(terraform output -raw thread_url)" >> $GITHUB_OUTPUT
           echo "sender_url=$(terraform output -raw sender_url)" >> $GITHUB_OUTPUT
-          echo "api_url=$(terraform output -raw api_url)" >> $GITHUB_OUTPUT
+          echo "db_ip=$(terraform output -raw db_public_ip)" >> $GITHUB_OUTPUT
 
       - name: Deployment Summary
         run: |
-          echo "## 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
-          echo "- **Thread**: ${{ steps.outputs.outputs.thread_url }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Sender**: ${{ steps.outputs.outputs.sender_url }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **API**: ${{ steps.outputs.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Deployment Successful - 4 EC2 Instances!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Services URLs:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Thread** (view messages): ${{ steps.outputs.outputs.thread_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Sender** (post messages): ${{ steps.outputs.outputs.sender_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **API** (backend): ${{ steps.outputs.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Database**: ${{ steps.outputs.outputs.db_ip }}:5432" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Each service runs on its own EC2 t2.micro instance!" >> $GITHUB_STEP_SUMMARY
