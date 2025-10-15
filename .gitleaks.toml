@@ -1,0 +1,59 @@
+# Configuration Gitleaks pour la détection de secrets
+title = "Gitleaks Configuration"
+
+# Règles personnalisées pour détecter les secrets spécifiques au projet
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key"
+regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+tags = ["key", "AWS"]
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Key"
+regex = '''(?i)aws(.{0,20})?(?-i)['\"][0-9a-zA-Z\/+]{40}['\"]'''
+tags = ["key", "AWS"]
+
+[[rules]]
+id = "github-token"
+description = "GitHub Token"
+regex = '''ghp_[0-9a-zA-Z]{36}'''
+tags = ["key", "GitHub"]
+
+[[rules]]
+id = "github-oauth"
+description = "GitHub OAuth Access Token"
+regex = '''gho_[0-9a-zA-Z]{36}'''
+tags = ["key", "GitHub"]
+
+[[rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''-----BEGIN (RSA|OPENSSH|DSA|EC|PGP) PRIVATE KEY-----'''
+tags = ["key", "private"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey|api[_-]?secret)(.{0,20})?['\"][0-9a-zA-Z]{32,45}['\"]'''
+tags = ["key", "API"]
+
+# Fichiers et chemins à ignorer
+[allowlist]
+description = "Allowlist"
+paths = [
+  '''\.git/''',
+  '''node_modules/''',
+  '''pnpm-lock\.yaml''',
+  '''package-lock\.json''',
+  '''\.terraform/''',
+  '''\.terraform\.lock\.hcl''',
+]
+
+# Patterns à ignorer (faux positifs)
+regexes = [
+  '''EXAMPLE_KEY''',
+  '''YOUR_API_KEY_HERE''',
+  '''<YOUR_.*>''',
+  '''placeholder''',
+]

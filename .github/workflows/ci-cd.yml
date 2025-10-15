@@ -18,8 +18,46 @@ env:
   REPOSITORY: ${{ github.repository }}
 
 jobs:
+  # Détection de secrets dans le code
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Récupère tout l'historique pour scanner tous les commits
+      
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # Analyse SAST (Static Application Security Testing)
+  sast-analysis:
+    name: SAST Analysis
+    runs-on: ubuntu-22.04
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          queries: security-and-quality
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
   validate:
     name: Lint and Format
+    needs: [secret-scan, sast-analysis]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
