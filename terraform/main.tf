@@ -292,10 +292,24 @@ resource "aws_instance" "db" {
               yum install -y docker
               systemctl start docker
               systemctl enable docker
+              
+              # Créer le script d'initialisation SQL
+              mkdir -p /tmp/db-init
+              cat > /tmp/db-init/init.sql << 'SQLEOF'
+              CREATE TABLE IF NOT EXISTS threads (
+                id SERIAL PRIMARY KEY,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              );
+              SQLEOF
+              
+              # Démarrer PostgreSQL avec le script d'initialisation
               docker run -d -p 5432:5432 --name postgres \
                 -e POSTGRES_USER=forum \
                 -e POSTGRES_PASSWORD=${var.db_password} \
                 -e POSTGRES_DB=forumdb \
+                -v /tmp/db-init:/docker-entrypoint-initdb.d \
                 postgres:16
               EOF
 
