@@ -121,30 +121,57 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    name: Generate Deployment Artifact
+    name: Deploy to AWS
     needs: build-and-push-images
     runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/main'
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
-      - name: Convert repository name to lowercase
-        id: repo_name
-        run: echo "REPO_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-        
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3
+
       - name: Extract commit short SHA
         id: sha
         run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-        
-      - name: Update docker-compose.yml with image tags
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: ./terraform
         run: |
-          sed -i 's|build: ./apps/api|image: ghcr.io/${{ steps.repo_name.outputs.REPO_NAME }}/api:${{ steps.sha.outputs.SHORT_SHA }}|g' docker-compose.yml
-          sed -i 's|build: ./apps/thread|image: ghcr.io/${{ steps.repo_name.outputs.REPO_NAME }}/thread:${{ steps.sha.outputs.SHORT_SHA }}|g' docker-compose.yml
-          sed -i 's|build: ./apps/sender|image: ghcr.io/${{ steps.repo_name.outputs.REPO_NAME }}/sender:${{ steps.sha.outputs.SHORT_SHA }}|g' docker-compose.yml
-          
-      - name: Save docker-compose.yml as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-compose
-          path: docker-compose.yml
-          retention-days: 7
+          terraform plan \
+            -var="docker_image_tag=${{ steps.sha.outputs.SHORT_SHA }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: ./terraform
+        run: terraform apply -auto-approve tfplan
+
+      - name: Get deployment outputs
+        working-directory: ./terraform
+        id: outputs
+        run: |
+          echo "thread_url=$(terraform output -raw thread_url)" >> $GITHUB_OUTPUT
+          echo "sender_url=$(terraform output -raw sender_url)" >> $GITHUB_OUTPUT
+          echo "api_url=$(terraform output -raw api_url)" >> $GITHUB_OUTPUT
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Thread**: ${{ steps.outputs.outputs.thread_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Sender**: ${{ steps.outputs.outputs.sender_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **API**: ${{ steps.outputs.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY

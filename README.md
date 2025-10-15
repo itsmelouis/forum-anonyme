@@ -64,10 +64,34 @@ docker compose up -d
 
 Le projet est configuré avec un pipeline CI/CD GitHub Actions qui exécute les étapes suivantes :
 
-1. **Validation** : Vérification du code (linting, formatting)
-2. **Tests** : Exécution des tests unitaires et d'intégration
+1. **Validation** : Vérification du code (linting, formatting, détection de secrets)
+2. **Tests** : Exécution des tests unitaires et E2E
 3. **Construction** : Génération des images Docker pour chaque service avec le tag correspondant au hash court du commit
-4. **Déploiement** : Push des images Docker générées sur GitHub Container Registry
+4. **Push** : Publication des images sur GitHub Container Registry (ghcr.io)
+5. **Déploiement** : Déploiement automatique sur AWS EC2 via Terraform (branche main uniquement)
+
+## Déploiement sur AWS
+
+L'application est automatiquement déployée sur AWS EC2 avec Terraform. Voir les guides détaillés :
+
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** : Guide complet de déploiement
+- **[GITHUB_SECRETS.md](./GITHUB_SECRETS.md)** : Configuration des secrets GitHub
+- **[terraform/README.md](./terraform/README.md)** : Documentation de l'infrastructure
+
+### Déploiement rapide
+
+1. Configurez les secrets GitHub (voir GITHUB_SECRETS.md)
+2. Poussez sur la branche `main`
+3. La pipeline déploie automatiquement sur AWS
+4. Récupérez les URLs dans le summary du workflow
+
+### Architecture AWS
+
+- **Instance EC2** : t2.micro avec Amazon Linux 2
+- **PostgreSQL** : Container Docker sur l'instance
+- **Elastic IP** : IP publique stable
+- **Security Groups** : Ports 80, 3000, 8080 ouverts
+- **Coût** : ~$10/mois (gratuit avec AWS Free Tier)
 
 ## Structure du projet
 
